@@ -1,15 +1,11 @@
 
-[![Travis Build Status](https://travis-ci.org/Corion/PWA-WeatherClient.svg?branch=master)](https://travis-ci.org/Corion/PWA-WeatherClient)
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/PWA-WeatherClient?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/PWA-WeatherClient)
+[![Travis Build Status](https://travis-ci.org/Corion/PWA-QRLogin.svg?branch=master)](https://travis-ci.org/Corion/PWA-QRLogin)
+[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/Corion/PWA-QRLogin?branch=master&svg=true)](https://ci.appveyor.com/project/Corion/PWA-QRLogin)
 
 # NAME
 
-PWA::WeatherClient - placeholder for the PWA of the client
+PWA::QRLogin - placeholder for the PWA for two-factor login
 
 # TO DO
 
-- Use the background sync API instead of (always) doing a HTTP request
-
-    This would make fetching the updated data more resilient and power saving
-    in the cases where the browser supports the Background Sync API. Currently
-    this means using Chrome, as Firefox does not support the API.
+- implement
