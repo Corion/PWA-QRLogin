@@ -1,0 +1,15 @@
+bin/serve.pl
+bump-manifest-version.pl
+lib/PWA/QRLogin.pm
+Makefile.PL
+MANIFEST			This list of files
+public/app.css
+public/css/bootstrap-3.4.1.min.css
+public/index.html
+public/js/handlebars-v4.1.2.js
+public/js/localforage.min-1.7.3.js
+public/js/morphdom-2.5.4.js
+public/manifest.json
+public/sw.js
+README
+README.mkdn

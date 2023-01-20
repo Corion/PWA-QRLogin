@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>Weather</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src data: 'self'; style-src 'unsafe-inline' 'self' report-uri './cspreport'">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' report-uri './cspreport'">
+    <meta name="viewport" content= "width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="css/bootstrap-3.4.1.min.css">
+    <link rel="stylesheet" href="app.css">
+    <script src="js/handlebars-v4.1.2.js"></script>
+    <script src="js/localforage.min-1.7.3.js"></script>
+    <script src="js/morphdom-2.5.4.js"></script>
+    <!--
+    -->
+<script type="text/x-handlebars-template" id="screen_3day">
+    {{#if installOnHomescreen}}<a href="#" onclick="javascript:installOnHomescreen();">Install to home screen</a>{{/if}}
+    <span>Weather data: {{locations.0.forecast.0.issuetime}}</span> <a href="#" onclick="javascript:action_refresh()">&#x21BB;</a>
+
+    <div class="locations">
+        <div class="location-border"></div>
+    {{#each locations}}<div class="location">
+    <div class="location-description">{{forecast.0.description}}</div>
+        <table><thead><tr><th></th><th>{{forecast.0.weekday}}</th><th>{{forecast.4.weekday}}</th><th>{{forecast.8.weekday}}</th></tr></thead><tbody>
+        <tr><td></td><td><span class="temperature">{{forecast.0.mintemp}}° / {{ forecast.0.maxtemp }}°</span><span class="temperature">{{ forecast.0.emoji }}</span></td><td><span class="temperature">{{forecast.4.mintemp}}° / {{ forecast.4.maxtemp }}°</span><span class="temperature">{{ forecast.4.emoji }}</span></td><td><span class="temperature">{{forecast.8.mintemp}}  / {{ forecast.8.maxtemp  }}°</span><span class="temperature">{{ forecast.8.emoji }}</span></td></tr>
+        <tr><td></td><td><span class="temperature">{{forecast.1.mintemp}}° / {{ forecast.1.maxtemp }}°</span><span class="temperature">{{ forecast.1.emoji }}</span></td><td><span class="temperature">{{forecast.5.mintemp}}° / {{ forecast.5.maxtemp }}°</span><span class="temperature">{{ forecast.5.emoji }}</span></td><td><span class="temperature">{{forecast.9.mintemp}}  / {{ forecast.9.maxtemp  }}°</span><span class="temperature">{{ forecast.9.emoji }}</span></td></tr>
+        <tr><td></td><td><span class="temperature">{{forecast.2.mintemp}}° / {{ forecast.2.maxtemp }}°</span><span class="temperature">{{ forecast.2.emoji }}</span></</td><td><span class="temperature">{{forecast.6.mintemp}}° / {{ forecast.6.maxtemp }}°</span><span class="temperature">{{ forecast.6.emoji }}</span></td><td><span class="temperature">{{forecast.10.mintemp}} / {{ forecast.10.maxtemp }}°</span><span class="temperature">{{ forecast.10.emoji }}</span></td></tr>
+        <tr><td></td><td><span class="temperature">{{forecast.3.mintemp}}° / {{ forecast.3.maxtemp }}°</span><span class="temperature">{{ forecast.3.emoji }}</span></</td><td><span class="temperature">{{forecast.7.mintemp}}° / {{ forecast.7.maxtemp }}°</span><span class="temperature">{{ forecast.7.emoji }}</span></td><td><span class="temperature">{{forecast.11.mintemp}} / {{ forecast.11.maxtemp }}°</span><span class="temperature">{{ forecast.11.emoji }}</span></td></tr>
+        </tbody>
+        </table>
+    </div>
+    {{/each}}
+        <div class="location-border"></div>
+    </div>
+</script>
+<script type="text/x-handlebars-template" id="screen_1day">
+    {{#if installOnHomescreen}}<a href="#" onclick="javascript:installOnHomescreen();">Install to home screen</a>{{/if}}
+    <span>Weather data: {{locations.0.forecast.0.issuetime}}</span> <a href="#" onclick="javascript:action_refresh()">&#x21BB;</a>
+
+    <div class="locations">
+        <div class="location-border"></div>
+    {{#each locations}}<div class="location">
+    <div class="location-description">{{forecast.0.description}}</div>
+    <div class="weather_big">{{ current_slot.emoji }}</div>
+    <div class="temperature_big">{{current_slot.mintemp}}° / {{ current_slot.maxtemp }}°</div>
+    </div>{{/each}}
+        <div class="location-border"></div>
+    </div>
+</script>
+<script type="text/x-handlebars-template" id="screen_config">
+    <ul>
+    {{#each current_config.locations}}<li><span>{{forecast.0.description}}</span><button onclick="javascript:remove_location({{@index}})">x</button></li>{{/each}}
+    </ul>
+    <label for="input-locations">Location:</label></label><input id="input-locations" type="text" list="locations">
+    <button onclick="javascript:add_location('input-locations');">Add</button>
+    <hr />
+    <button onclick="javascript:action_config_save();">Save</button><button onclick="javascript:action_config_cancel()">Cancel</button>
+    <datalist id="locations">
+        {{#each current_config.forecast_locations}}<option data-value="lat/long {{position}}">{{description}}</option>{{/each}}
+    </datalist>
+</script>
+<script type="text/x-handlebars-template" id="screen_about">
+    <h1>Weather display</h1>
+    <h2>About this app</h2>
+    <p>This application renders free weather data from the Deutscher
+       Wetterdienst.</p>
+    <iframe frameborder="0" src="changes.html" width="100%"
+        onload="this.style.height = this.contentWindow.document.documentElement.scrollHeight + 'px';" >Loading version information
+    </iframe>
+    <details>
+        <summary><h2>License</h2></summary>
+        This program is distributed under the Artistic License.
+    </details>
+    <details>
+        <summary><h2>Repository</h2></summary>
+        The source code for this program is available at <a href="https://github.com/Corion/PWA-WeatherClient">https://github.com/Corion/PWA-WeatherClient</a>.
+    </details>
+    <details>
+    <summary><h2>Data Usage (GDPR/DSGVO)</h2>
+    <p>This application shares your list of locations and current position
+       with the server to fetch the weather information for these locations.
+       This information is processed server side for providing the weather
+       forecast information.
+       </p>
+       <p>Click for more information</p>
+    </summary>
+    <h2>What data do we collect</h2>
+    <p>The web server logs collect the user agent information as is sent with
+       every request your browser makes. The location information is not saved
+       to the web server log files. The fields written to the web server log
+       files are <b>Accessed URL</b>, <b>IP address</b>, <b>Status code</b>,
+       <b>Timestamp</b>, <b>Size of response</b>, <b>User Agent string</b>.</p>
+    <h2>Data erasure</h2>
+    <p>All data kept is needed for operating this service under DSGVO
+       1.b) and DSGVO 1.f).</p>
+    <h2>Data retention</h2>
+    <p>The access data is kept in a log file server side and used for debugging
+       and troubleshooting. It is erased periodically and not kept longer than
+       12 months after the data was sent by your device.</p>
+    </details>
+</script>
+<script>
+    var default_state = {
+        state_schema: '20230101-01',
+
+        current_config: {
+            // password / TOTP seed code
+        },
+        state_install_prompt: "not_asked",
+        screen: "screen_3day"
+    };
+    /* This is manually updated from the DB */
+    let forecast_locations;
+    var state;
+
+    function setItemAt(state,path,value) {
+        let items = path.split( /\./ );
+        let val = state;
+        for( let pos = 0; pos < items.length-1; pos++ ) {
+            val = val[items[pos]];
+        };
+        val[items[items.length-1]] = value;
+        return value
+    };
+
+    function store_value(state,new_value, path, position) {
+        path = path.replace('%d',position);
+        setItemAt(state,path,new_value);
+    };
+
+    function loadConfig() {
+        return localforage.getItem("config")
+    };
+
+    function storeConfig(config) {
+        //var blob = new Blob([image]);
+        //var imageURI = window.URL.createObjectURL(blob);
+        return localforage.setItem("config", config, () => {
+            // console.log("Stored config")
+        })
+    };
+
+    function action_config_save() {
+        state.locations = state.current_config.locations.slice();
+        state.delay     = state.current_config.delay;
+        storeConfig(state);
+        schedule_weather_update();
+        render_3day(state);
+    };
+
+    function action_config_cancel() {
+        render_3day(state);
+    }
+
+    function action_refresh() {
+        fetch_location_weather(state.locations)
+    }
+
+    function morph(DOM,html,options) {
+        // Clean up the HTML so that morphdom understands what we want it to do
+        html = html.replace(/^\s+/,'');
+        html = html.replace(/^<!--.*?-->\s*/m,'');
+        // console.log(html);
+        morphdom(DOM, html, options);
+    };
+
+    function render_screen(screen_name,state) {
+        let source   = document.getElementById(screen_name).innerHTML;
+        if( ! source ) {
+            alert("No screen '"+screen_name+"' found");
+        };
+
+        // Update the current time slot to use in the state
+        let now = new Date().getHours();
+        let current_slot = Math.trunc((now+3) / 6);
+        for(let i = 0; i < state.locations.length; i++) {
+            state.locations[i].current_slot = state.locations[i].forecast[current_slot];
+        };
+
+        let template = Handlebars.compile(source);
+        let s = template(state);
+        s = '<div id="screen">' + s + '</div>';
+        morph(
+            window.document.getElementById('screen'),
+            s, {});
+    };
+    function render_3day(state) {
+        state.screen = 'screen_3day';
+        update(state);
+    };
+    function render_1day(state) {
+        state.screen = 'screen_1day';
+        update(state);
+    };
+    function render_config(state) {
+        state.screen = 'screen_config';
+
+        state.current_config = {
+            "locations": clone(state.locations),
+            "delay"    : state.delay,
+            // we should keep these in a separate file and fetch them from
+            // the cache on page load instead of hardcoding. Postponed
+            // until we encounter the problem.
+            "forecast_locations" : forecast_locations,
+        };
+
+        update(state);
+    };
+    function render_about(state) {
+        state.screen = 'screen_about';
+        update(state);
+    };
+
+    function update(state) {
+        // Maybe we want to use window.requestAnimationFrame to do the
+        // repainting in an idle way
+        // if(! queued_repaint) {
+        //     queued_repaint = window.requestAnimationFrame(timestamp => {
+        //         render_screen(state.screen, state)
+        //     })
+        //  }
+        //
+        render_screen(state.screen, state);
+    }
+
+    // We also want
+    // function data_updated(state) {
+    // to mark the current display as potentially dirty without even queueing
+    // a repaint?! Or do we simply always repaint?!
+
+    function loadForecastCache() {
+        return localforage.getItem("forecast-cache").then(result => {
+            return result
+        }).catch( () => {
+            console.log("Error retrieving cache?!")
+        });
+    }
+
+    let forecast_fetch_running;
+    function schedule_weather_update() {
+        // We should just do a background sync request here, which will
+        // do the retry logic etc. using the browser instead of using timeout
+        // but Firefox doesn't support background sync...
+        if( ! forecast_fetch_running ) {
+            forecast_fetch_running = window.setTimeout(function() {
+                forecast_fetch_running = undefined;
+                fetch_location_weather(state.locations);
+            }, 10);
+        }
+    };
+
+    function forecast_information_received(info) {
+        // Update the new state from the data
+        for( var i in state.locations ) {
+            state.locations[i].forecast = info.forecast[i];
+        };
+        state.fetched = info.fetched;
+
+        // Update our HTML if we are displaying forecast data
+        if(state.screen === 'screen_3day') {
+            render_3day(state);
+        };
+
+        // If it is stale, request new information
+        // This shouldn't happen here, but in the main app, ideally far
+        // more asynchronously and rate limited
+        // Waiting for
+        // https://github.com/WICG/BackgroundSync/blob/master/explainers/periodicsync-explainer.md
+        // to become reality
+        if( forecast_information_stale(info)) {
+            schedule_weather_update()
+        }
+    }
+
+    /* Fetch the locations (and other stuff?) via HTTP */
+    /* We do all the caching in the client instead of trying to do HTTP
+       caching, since we must invalidate the data manually anyway
+    */
+    async function fetch_location_weather(locations) {
+        let url = "./forecast";
+        let payload = [];
+        for( var i in locations ) {
+            payload.push({
+                "longitude" : locations[i].longitude,
+                "latitude"  : locations[i].latitude
+            });
+        };
+        payload = { locations : payload };
+        await fetch(url,
+            {
+                method: "POST",
+                headers: { "Content-Type":"application/json" },
+                body: JSON.stringify(payload)
+            },
+        ).then(response => response.json()
+        ).then(response => {
+            // Normalize our data to °C
+            for( var i in response.forecast ) {
+                for( var j in response.forecast[i] ) {
+                    response.forecast[i][j].mintemp = Math.round(response.forecast[i][j].mintemp -273.1,0);
+                    response.forecast[i][j].maxtemp = Math.round(response.forecast[i][j].maxtemp -273.1,0);
+                }
+            };
+
+            forecast_information_received(response);
+
+            // Cache the received weather data in our cache
+            // for lack of a better place
+            return localforage.setItem("forecast-cache",
+                { "fetched":Date.now(), response });
+        })
+    }
+
+    function forecast_information_stale(info) {
+           !info
+        || ! info.last_fetch
+        || (Date.now() - info.last_fetch) > 4*60*60*1000 // 4 hours, make configurable later
+    }
+
+    function handle_visibility_change() {
+        //console.log("Focus change", document.visibilityState);
+        if( document.visibilityState === 'visible' ) {
+            //console.log("We got the focus again");
+            // User just switched to us, maybe we can fetch an update
+            if( forecast_information_stale(state)) {
+                schedule_weather_update();
+            }
+        }
+    }
+
+/* Launch our service worker as cache */
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+        .then(registration => {
+            // console.log('Service Worker is registered', registration);
+            return registration.update();
+        }).then( registration => {
+            // console.log('Background service updated', registration);
+            if(registration.sync) { /* we can fetch forecasts in the background */
+                /* Our service worker will now get the "update-forecast" event */
+                console.log('Background forecast updates enabled');
+                // Note that we _can_ schedule background updates
+                // then, in schedule_update(), check that and use it instead
+                // of manually fetching
+                // registration.sync.register('update-forecast')
+                // .catch(function(err) {
+                //     return err;
+                // });
+            };
+        })
+        .catch(err => {
+            console.error('Registration failed:', err);
+        });
+    });
+
+    navigator.serviceWorker.addEventListener('message', event => {
+        console.log(event.data.msg, event.data.url);
+        if( event.data.msg == 'repaint' ) {
+            // The service worker received fresh data and wants us to update
+            // This should maybe be(come) screen != config
+            if(state.screen == 'screen_3day') {
+                render_3day(state);
+            }
+        };
+    });
+};
+
+let deferredPrompt;
+
+function init() {
+    // These are for scheduling a data refresh in the case
+    // where the page hasn't been shown for a while
+    try {
+        console.log(document.addEventListener('visibilityChange', handle_visibility_change));
+    } catch(e) {
+        console.log(e);
+    }
+    window.addEventListener('focus', handle_visibility_change);
+
+    loadConfig().then(appState => {
+        state = appState || default_state;
+        //state = default_state;
+    }).then(() => {
+        return loadForecastCache()
+    }).then( forecast_info => {
+        console.log("Got forecast",forecast_info);
+        if( forecast_info ) {
+            // console.log("Fetched forecast from localforage", forecast_info);
+
+            // Remove the forecast for the current location if we
+            // don't know it/have it/whatever?!
+            // We don't want to overwrite the current GPS location with
+            // the cached data!
+
+            // If the current forecast is older than 60 minutes, schedule
+            // fetching an updated forecast
+            if(    !forecast_info.fetched
+                || Date.now() - forecast_info.fetched > 60*60*1000 ) {
+                console.log("Last forecast is stale, fetching new", forecast_info.fetched);
+                schedule_weather_update();
+            };
+
+            forecast_information_received( forecast_info.response );
+        } else {
+            // We don't have anything cached, so we need to fetch it online
+            schedule_weather_update();
+            // but first, paint a placeholder
+            render_3day(state);
+        }
+    }).then( () => {
+        return fetch('./locations.json',
+            {
+                method: "GET",
+            },
+        );
+
+    // Fetch the locations for autocomplete
+    }).then(response => response.json()
+     ).then( response => {
+         forecast_locations = response;
+    });
+}
+
+/* Array deep clone */
+const clone = (items) => items.map(
+     item => Array.isArray(item)         ? clone(item)
+           : typeof( item ) === 'object' ? Object.assign({}, item )
+           : item);
+</script>
+</head>
+<body onload="javascript:init()">
+<div id="header"><a href="#" onclick="javascript:render_3day(state);">Login</a>
+               | <a href="#" onclick="javascruot:render_config(state)">Config</a>
+               | <a href="#" onclick="javascript:render_about(state);">About</a>
+</div>
+<div id="screen">
+    <p>Javascript is not enabled?!</p>
+    <p>I'm sorry, but this app doesn't make sense without Javascript.</p>
+</div>
+</body>
+</html>

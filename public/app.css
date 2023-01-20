@@ -1,0 +1,53 @@
+#screen: {
+    overflow: none;
+}
+
+
+div.location-description {
+    font-size: 18pt;
+    text-align: center;
+}
+
+div.locations {
+    float: left;
+    /* display: flex; */
+    list-style: none;
+    overflow-x: scroll;
+    overflow-y: hidden;
+    white-space: nowrap;
+    scroll-snap-type: x mandatory;
+    width: 100%;
+}
+
+div.location {
+    display: inline-block;
+    width: 90%;
+    scroll-snap-align: center;
+}
+
+div.location-border {
+    display: inline-block;
+    width: 10%;
+}
+
+table {
+    width: 100%;
+}
+
+th {
+    text-align: center;
+}
+td {
+    text-align: center;
+}
+
+span.temperature {
+    font-size: 5.5vw;
+}
+.weather_big {
+    font-size: 25.5vw;
+    text-align: center;
+}
+.temperature_big {
+    text-align: center;
+}
