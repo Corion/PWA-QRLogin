@@ -373,6 +373,7 @@ window.setTimeout(checkLoggedIn, 5000);
     <h1>Login</h1>
     <form action="<%= url_for('login.html') %>" method="POST">
     <input type="hidden" name="credential_type" value="password" />
+    <input type="hidden" name="nonce" value="<%= $nonce %>" />
     <label for="username">Username</label><input type="text" name="account" /><br>
     <label for="password">Password</label><input type="password" name="credential" /><br>
     <div>
