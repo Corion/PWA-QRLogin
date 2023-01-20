@@ -45,11 +45,12 @@ my %module = (
 
     PREREQ_PM => {
         'Filter::signatures'      => 0,
-        #'Weather::MOSMIX'         => 0,
         'Mojolicious'             => 8,
         # For static and dynamic compression of responses
         'Mojolicious::Static::Role::Compressed' => '0.04',
         'Mojolicious::Plugin::Gzip'             => '0.04',
+        'MojoX::Session'          => 0,
+        'Authen::OATH'            => 0,
         'Plack::Loader'           => 0,
     },
     TEST_REQUIRES => {
