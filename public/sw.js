@@ -1,5 +1,5 @@
 /* Simple cache web service worker for PWAs */
-let cacheName = 'WeatherClient-cache';
+let cacheName = 'login-pwa-cache';
 
 self.addEventListener('install', function(event) {
   event.waitUntil(
@@ -7,14 +7,14 @@ self.addEventListener('install', function(event) {
       // Use self.registration.scope to find the base URL instead
       return cache.addAll(
         [ /* All resources that are fit to store */
-          './index.html',
+          './login-pwa.html',
           './changes.html',
           './sw.js',
           './manifest.json',
-          './locations.json',
           './js/localforage.min-1.7.3.js',
           './js/handlebars-v4.1.2.js',
           './js/morphdom-2.5.4.js',
+          './js/html5-qrcode.2.3.4.min.js',
           './css/bootstrap-3.4.1.min.css',
           './app.css'
           // '/offline.html'

@@ -91,22 +91,26 @@ sub valid_login( $username, $credential_type, $credential ) {
     }
 }
 
-get '/login.html' => sub( $c ) {
+get 'login.html' => sub( $c ) {
     my $session = $c->stash('mojox-session');
 
     my $username = $session->data('username');
     my $sid = $session->sid;
 
+    my $nonce = rand();
+    $session->data( nonce => $nonce );
+
     return $c->render('login',
-        username => $username,
-        sid => $sid,
+            username => $username,
+            sid => $sid,
+            nonce => $nonce,
     );
 };
 
 sub qrcode_for( $str ) {
     my $img = plot_qrcode($str, {
-        size          => 2,
-        margin        => 2,
+        size          => 4,
+        margin        => 4,
         version       => 1,
         level         => 'M',
         casesensitive => 1,
@@ -115,7 +119,6 @@ sub qrcode_for( $str ) {
     });
     $img->write( data => \my $data, type => 'png' )
         or die $img->errstr;
-warn sprintf "%d bytes of PNG", length($data);
     return $data
 }
 
@@ -132,11 +135,14 @@ helper qrcode_for_url => sub( $c, $url ) {
 get 'login-qrcode.png' => sub( $c ) {
     my $session = $c->stash('mojox-session');
     my $sid = $session->sid;
+
+    my $nonce = $session->data('nonce');
+
     my %payload = (
         target => $c->url_for('/login.html')->to_abs,
         sid    => $sid,
         # also add a nonce as another identifier
-        nonce  => rand(),
+        nonce  => $nonce,
         # add what information we want in return
         required => ['username', 'password', 'sid'],
         #required => ['username', 'totp'],
@@ -146,31 +152,89 @@ get 'login-qrcode.png' => sub( $c ) {
 };
 
 post 'login.html' => sub( $c ) {
-    my $target = $c->param('target') // '/';
-    my $account = $c->param('account');
-    my $cred_type = $c->param('credential_type');
-    my $credential = $c->param('credential');
-
     my $session = $c->stash('mojox-session');
-    #$session->load or $session->create; # well, we should have a session here?!
 
-    my $next = $c->url_for('/login.html' )->query( target => $target );
-    if( ! $account ) {
-        # nothing to do here
-        warn "No account passed in?!";
+    my $ct = $c->req->headers->content_type;
 
-    } elsif( valid_login( $account, $cred_type, $credential )) {
-        warn "Valid login for '$account' / '$cred_type' / '$credential'";
+    if( $ct =~ m'^application/json\b' ) {
 
-        # XXX check that $target is an URL on this host!
-        $next = $target;
-        $session->data( username => $account );
-        $session->flush(); # this should not be necessary
-    } else {
-        warn "Invalid login credentials for $account / $cred_type";
+        my $payload = decode_json( $c->req->body );
+        my $sid = $payload->{'sid'};
+        my $nonce = $payload->{'nonce'};
+
+        $session->load( $sid );
+
+        if( $nonce ne $session->data('nonce') ) {
+            # you don't belong here
+            warn "Wrong sid or nonce";
+            use Data::Dumper;
+            warn Dumper $payload;
+            warn sprintf "sid: %s nonce: %s", $session->sid, $session->data('nonce');
+            return
+        };
+
+        if( $payload->{action} eq 'query' ) {
+            my $res = $session->data('username') // 0;
+            my $target = $session->data('target') // '/';
+            my @target;
+            if( $res ) {
+                @target = ( target => $c->url_for( $target )->to_abs );
+            };
+            warn "Browser check, ", join " ", @target;
+            $c->render( json => { logged_in => $res, @target });
+            return
+
+        } elsif( $payload->{action} eq 'confirm' ) {
+
+            # Mobile confirmation came in:
+            my $account = $payload->{'account'};
+            my $cred_type = $payload->{'credential_type'};
+            my $credential = $payload->{'credential'};
+
+            if( ! $account ) {
+                # nothing to do here
+                warn "No account passed in?!";
+
+            } elsif( valid_login( $account, $cred_type, $credential )) {
+                warn "Valid 2fa login for '$account' / '$cred_type' / '$credential' / $sid";
+
+                # XXX check that $target is an URL on this host!
+                $session->data( username => $account );
+                $session->_is_new(0);
+                $session->flush(); # this should not be necessary
+            } else {
+                warn "Invalid login credentials for $account / $cred_type";
+            }
+        }
+
+    } elsif( $ct =~ m'^application/x-www-form-urlencoded\b' and my $nonce = $c->param('nonce')) {
+        # manual login through browser
+
+        my $target = $c->param('target') // '/';
+        my $account = $c->param('account');
+        my $cred_type = $c->param('credential_type');
+        my $credential = $c->param('credential');
+        my $sid = $session->sid;
+        $session->data( target => $target );
+
+        my $next = $c->url_for('/login.html' )->query( target => $target );
+        if( ! $account ) {
+            # nothing to do here
+            warn "No account passed in?!";
+
+        } elsif( valid_login( $account, $cred_type, $credential )) {
+            warn "Valid login for '$account' / '$cred_type' / '$credential'";
+
+            # XXX check that $target is an URL on this host!
+            $next = $target;
+            $session->data( username => $account );
+            $session->flush(); # this should not be necessary
+        } else {
+                warn "Invalid login credentials for $account / $cred_type";
+        }
+
+        $c->redirect_to( $next);
     }
-
-    $c->redirect_to( $next);
 };
 
 get '/logout.html' => sub( $c ) {
@@ -190,9 +254,11 @@ get '/setup-pwa.html' => sub( $c ) {
     my $username = $session->data('username');
 
     if( ! $username ) {
+        warn "We have no username. Log in first...";
         return $c->redirect_to($c->url_for('login.html'));
 
     } else {
+        warn "Setting up PWA for $username";
         $c->render('setup-pwa',
             sid      => $sid,
             username => $username,
@@ -234,7 +300,6 @@ get '/login-pwa.html' => sub( $c ) {
         $c->redirect_to($c->url_for('login.html')->to_abs);
 
     } else {
-
         my $username = $session->data('username');
         my $password = $credentials{ username }->{password};
 
@@ -274,6 +339,34 @@ __DATA__
 @@ login.html.ep
 <!DOCTYPE html>
 <html>
+<head>
+<script>
+// Maybe also support websockets here?!
+function checkLoggedIn() {
+    let params = {
+        sid: "<%= $sid %>",
+        nonce: "<%= $nonce %>",
+        action: "query"
+    };
+    fetch("<%= url_for('/login.html')->to_abs %>", {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+
+    })
+    .then( (response) => response.json())
+    .then( (data) => {
+        if( data.target ) { // we are logged in
+            window.location = data.target
+        }
+    });
+
+    window.setTimeout(checkLoggedIn, 5000);
+};
+window.setTimeout(checkLoggedIn, 5000);
+</script>
+</head>
+<body onload="javascript:checkLoggedIn()">
 % if( defined $username ) {
     <p>You are already logged in as <b><%= $username %></b>. <a href="<%= url_for('logout.html') %>">Log out</a></p>
 % } else {
@@ -300,7 +393,7 @@ __DATA__
 <li>Go to this URL with your phone:</li>
 % my $url = url_for( 'login-pwa-setup' )->query( sid => $sid )->to_abs;
 <img src="<%= url_for('qr.png')->query( url => $url ) %>" alt="QR code for login" />
-<div><a href="<%= $url %>"> <%= $url %></div>
+<div><a href="<%= $url %>"> <%= $url %></a></div>
 <li>Add the URL to your start screen as application</li>
 <li>XXX this needs to be implemented:</li>
 <li>Confirm the addition here</li>
