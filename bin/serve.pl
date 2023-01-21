@@ -194,6 +194,7 @@ post 'login.html' => sub( $c ) {
             if( ! $account ) {
                 # nothing to do here
                 warn "No account passed in?!";
+                $c->render( json => { logged_in => 0, reason => "Invalid app" });
 
             } elsif( valid_login( $account, $cred_type, $credential )) {
                 warn "Valid 2fa login for '$account' / '$cred_type' / '$credential' / $sid";
@@ -202,8 +203,10 @@ post 'login.html' => sub( $c ) {
                 $session->data( username => $account );
                 $session->_is_new(0);
                 $session->flush(); # this should not be necessary
+                $c->render( json => { logged_in => 1, reason => "Logged in" });
             } else {
                 warn "Invalid login credentials for $account / $cred_type";
+                $c->render( json => { logged_in => 0, reason => "Invalid credentials" });
             }
         }
 

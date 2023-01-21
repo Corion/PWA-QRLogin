@@ -21,6 +21,12 @@ Scan the login code to log in as {{ state.current_config.username }}
     </div>
     <div style="width: 500px" id="reader"></div>
 </script>
+<script type="text/x-handlebars-template" id="screen_logged_in">
+    {{#if installOnHomescreen}}<a href="#" onclick="javascript:installOnHomescreen();">Install to home screen</a>{{/if}}
+    <div>
+Logged in, welcome!
+    </div>
+</script>
 <script type="text/x-handlebars-template" id="screen_config">
     <ul>
     {{#each current_config.locations}}<li><span>{{forecast.0.description}}</span><button onclick="javascript:remove_location({{@index}})">x</button></li>{{/each}}
@@ -131,23 +137,35 @@ Scan the login code to log in as {{ state.current_config.username }}
         morph(
             window.document.getElementById('screen'),
             s, {});
-
-        var html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", { fps: 10, qrbox: 250 });
-            html5QrcodeScanner.render(onScanSuccess);
-
     };
     function render_scan(state) {
         state.screen = 'screen_scan';
+        update(state);
+
+        //var html5QrcodeScanner = new Html5QrcodeScanner(
+        //    "reader", { fps: 10, qrbox: 250 }
+        //);
+        window.html5Qrcode = new Html5Qrcode("reader");
+
+        try {
+            window.html5Qrcode.start({ facingMode: "environment" }, { fps: 10 }, onScanSuccess );
+        } catch( err ) {
+            alert(err);
+        }
+        // html5QrcodeScanner.render(onScanSuccess);
+    };
+    function render_logged_in(state) {
+        state.screen = 'screen_logged_in';
         update(state);
     };
     function render_config(state) {
         state.screen = 'screen_config';
 
-        state.current_config = {
-            username: "<%= $username %>",
-            // username: <%= $username %>
-        };
+        //state.current_config = {
+        //    // username: "<%= $username %>",
+        //    username: "demo",
+        //    // username: <%= $username %>
+        //};
 
         update(state);
     };
@@ -258,11 +276,19 @@ function onScanSuccess(decodedText, decodedResult) {
             },
             body: JSON.stringify(login),
         })
-        .then( (response) => response.json())
+        .then( (response) => response.text())
         .then( (data) => {
             // ...
             response = undefined;
-            alert("Logged in?!");
+            if( window.html5Qrcode ) {
+                window.html5Qrcode.stop()
+                .then((ignore) => {
+                    render_logged_in(state);
+                })
+                .catch( (err) => {
+                    alert(err);
+                });
+            };
         });
     }
 }
