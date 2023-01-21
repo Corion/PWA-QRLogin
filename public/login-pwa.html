@@ -247,20 +247,24 @@ function onScanSuccess(decodedText, decodedResult) {
         "action": "confirm"
     };
 
-    // Now, let the other end see that we've seen its QR code:
-    response = fetch(res.target, {
-        method: 'POST',
-        cache: 'no-cache',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(login),
-    })
-    .then( (response) => response.json())
-    .then( (data) => {
-        // ...
-        alert("Logged in?!");
-    });
+    // Don't trigger a second request if we have one in flight already
+    if( ! response) {
+        // Now, let the other end see that we've seen its QR code:
+        response = fetch(res.target, {
+            method: 'POST',
+            cache: 'no-cache',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(login),
+        })
+        .then( (response) => response.json())
+        .then( (data) => {
+            // ...
+            response = undefined;
+            alert("Logged in?!");
+        });
+    }
 }
 
 
