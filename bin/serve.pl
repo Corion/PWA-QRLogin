@@ -29,7 +29,6 @@ my %credentials = (
     'demo' => { name => 'demo', password => 'demo', otp_secret => 'demo', },
 );
 
-
 my $dbh = DBI->connect('dbi:SQLite:dbname=:memory:');
 $dbh->do(<<'SQL');
     CREATE TABLE session (
@@ -41,7 +40,7 @@ $dbh->do(<<'SQL');
 SQL
 
 plugin session =>
-      {stash_key => 'mojox-session', store => MojoX::Session::Store::Dbi->new(dbh  => $dbh), expires_delta =>  60*60};
+    {stash_key => 'mojox-session', store => MojoX::Session::Store::Dbi->new(dbh  => $dbh), expires_delta =>  60*60};
 
 get '/' => sub {
     my $c = shift;
@@ -62,7 +61,6 @@ get '/index.html' => sub {
 };
 
 sub validate_password( $username, $expected, $password ) {
-    warn "$expected =/= $password?";
     return $expected eq $password
 }
 
@@ -73,8 +71,8 @@ sub validate_totp( $username, $ts, $secret, $totp ) {
 
 sub valid_login( $username, $credential_type, $credential ) {
     if( my $cred = $credentials{ $username } ) {
-        warn "Have credentials for '$username'";
-        use Data::Dumper; warn Dumper $cred;
+        #warn "Have credentials for '$username'";
+        #use Data::Dumper; warn Dumper $cred;
         if( my $expected = $cred->{ $credential_type } ) {
             if( $credential_type eq 'password' ) {
                 return validate_password( $username, $expected, $credential )
@@ -86,7 +84,7 @@ sub valid_login( $username, $credential_type, $credential ) {
             }
         }
     } else {
-        warn "Unknown user '$username'";
+        #warn "Unknown user '$username'";
         return undef
     }
 }
@@ -146,6 +144,7 @@ get 'login-qrcode.png' => sub( $c ) {
         # add what information we want in return
         required => ['username', 'password', 'sid'],
         #required => ['username', 'totp'],
+        appId    => 'QRCodeLogin',
     );
     my $data = qrcode_for( encode_json(\%payload));
     $c->render( data => $data, format => 'png' );

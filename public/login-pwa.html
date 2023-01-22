@@ -256,6 +256,11 @@ function onScanSuccess(decodedText, decodedResult) {
     // alert(`Scan result: ${decodedText}`);
     let res = JSON.parse(decodedText);
 
+    if( res.appId !== "QRCodeLogin" ) {
+        // It's a QR code that is not for us, ignore it silently
+        return;
+    }
+
     let login = {
         "account": state.current_config.username,
         "credential": state.current_config.password, // XXX totp
