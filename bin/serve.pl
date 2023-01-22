@@ -29,9 +29,11 @@ my %credentials = (
     'demo' => { name => 'demo', password => 'demo', otp_secret => 'demo', },
 );
 
-my $dbh = DBI->connect('dbi:SQLite:dbname=:memory:');
+my $dsn = $ENV{DSN} // 'dbi:SQLite:dbname=:memory:';
+
+my $dbh = DBI->connect($dsn);
 $dbh->do(<<'SQL');
-    CREATE TABLE session (
+    CREATE TABLE IF NOT EXISTS session (
         sid          VARCHAR(40) PRIMARY KEY,
         data         TEXT,
         expires      INTEGER UNSIGNED NOT NULL,
