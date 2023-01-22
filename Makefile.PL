@@ -49,6 +49,7 @@ my %module = (
         # For static and dynamic compression of responses
         'Mojolicious::Static::Role::Compressed' => '0.04',
         'Mojolicious::Plugin::Gzip'             => '0.04',
+        # For external (not in-memory) session handling
         'MojoX::Session'          => 0,
         'Authen::OATH'            => 0,
         'Plack::Loader'           => 0,
