@@ -91,7 +91,7 @@ sub valid_login( $username, $credential_type, $credential ) {
     }
 }
 
-get 'login.html' => sub( $c ) {
+get '/login.html' => sub( $c ) {
     my $session = $c->stash('mojox-session');
 
     my $username = $session->data('username');
@@ -152,7 +152,7 @@ get 'login-qrcode.png' => sub( $c ) {
     $c->render( data => $data, format => 'png' );
 };
 
-post 'login.html' => sub( $c ) {
+post '/login.html' => sub( $c ) {
     my $session = $c->stash('mojox-session');
 
     my $ct = $c->req->headers->content_type;
@@ -248,7 +248,7 @@ get '/logout.html' => sub( $c ) {
     my $sid = $session->sid;
     $session->expire;
 
-    return $c->redirect_to($c->url_for('login.html'));
+    return $c->redirect_to($c->url_for('/login.html'));
 };
 
 # This is visited from the browser:
@@ -259,7 +259,7 @@ get '/setup-pwa.html' => sub( $c ) {
 
     if( ! $username ) {
         warn "We have no username. Log in first...";
-        return $c->redirect_to($c->url_for('login.html'));
+        return $c->redirect_to($c->url_for('/login.html'));
 
     } else {
         warn "Setting up PWA for $username";
@@ -285,11 +285,11 @@ get '/login-pwa-setup' => sub( $c ) {
     if( $session->is_expired ) {
         # baaad user!
         # XXX Maybe let them log in via mobile and then return here?!
-        $c->redirect_to($c->url_for('login.html')->to_abs);
+        $c->redirect_to($c->url_for('/login.html')->to_abs);
 
     } else {
         $c->stash( sid => $sid );
-        $c->redirect_to($c->url_for('login-pwa.html')->to_abs);
+        $c->redirect_to($c->url_for('/login-pwa.html')->to_abs);
     }
 };
 
@@ -301,7 +301,7 @@ get '/login-pwa.html' => sub( $c ) {
 
     if( $session->is_expired ) {
         # baaad user!
-        $c->redirect_to($c->url_for('login.html')->to_abs);
+        $c->redirect_to($c->url_for('/login.html')->to_abs);
 
     } else {
         my $username = $session->data('username');
@@ -333,10 +333,10 @@ __DATA__
 <html>
 % if( defined $username ) {
     <p>Welcome <%= $username %></p>
-    <p>You can <a href="<%= url_for('logout.html') %>">log out</a>.</p>
-    <p>You can <a href="<%= url_for('setup-pwa.html') %>">set up a QR code for login</a>.</p>
+    <p>You can <a href="<%= url_for('/logout.html') %>">log out</a>.</p>
+    <p>You can <a href="<%= url_for('/setup-pwa.html') %>">set up a QR code for login</a>.</p>
 % } else {
-    <p>Please <a href="<%= url_for('login.html') %>">log in</a></p>
+    <p>Please <a href="<%= url_for('/login.html') %>">log in</a></p>
 % }
 </html>
 
@@ -372,10 +372,10 @@ window.setTimeout(checkLoggedIn, 5000);
 </head>
 <body onload="javascript:checkLoggedIn()">
 % if( defined $username ) {
-    <p>You are already logged in as <b><%= $username %></b>. <a href="<%= url_for('logout.html') %>">Log out</a></p>
+    <p>You are already logged in as <b><%= $username %></b>. <a href="<%= url_for('/logout.html') %>">Log out</a></p>
 % } else {
     <h1>Login</h1>
-    <form action="<%= url_for('login.html') %>" method="POST">
+    <form action="<%= url_for('/login.html') %>" method="POST">
     <input type="hidden" name="credential_type" value="password" />
     <input type="hidden" name="nonce" value="<%= $nonce %>" />
     <label for="username">Username</label><input type="text" name="account" /><br>
@@ -396,8 +396,8 @@ window.setTimeout(checkLoggedIn, 5000);
 <h1>Set up login via phone</h1>
 <ol>
 <li>Go to this URL with your phone:</li>
-% my $url = url_for( 'login-pwa-setup' )->query( sid => $sid )->to_abs;
-<img src="<%= url_for('qr.png')->query( url => $url ) %>" alt="QR code for login" />
+% my $url = url_for( '/login-pwa-setup' )->query( sid => $sid )->to_abs;
+<img src="<%= url_for('/qr.png')->query( url => $url ) %>" alt="QR code for login" />
 <div><a href="<%= $url %>"> <%= $url %></a></div>
 <li>Add the URL to your start screen as application</li>
 <li>XXX this needs to be implemented:</li>
