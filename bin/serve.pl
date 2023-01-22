@@ -322,7 +322,8 @@ get '/login-pwa.html' => sub( $c ) {
     }
 };
 
-# XXX in-browser confirmation for the OTP, just in case a session id leaks
+# [ ] use JS to show the QR code, so it's only visible when it'll actually work
+# [ ] Show warning if the browser-side fetch() call fails
 
 # Start the Mojolicious command system
 app->start;
@@ -352,7 +353,8 @@ function checkLoggedIn() {
         nonce: "<%= $nonce %>",
         action: "query"
     };
-    fetch("<%= url_for('/login.html')->to_abs %>", {
+    // fetch("<%= url_for('/login.html')->to_abs %>", {
+    fetch(window.location.href, {
         method: 'POST',
         headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
         body: JSON.stringify(params),
