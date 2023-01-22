@@ -122,7 +122,7 @@ sub qrcode_for( $str ) {
     return $data
 }
 
-get 'qr.png' => sub( $c ) {
+get '/qr.png' => sub( $c ) {
     my $url = $c->param('url');
     # Check that the URL is local to our server!
     $c->render( data => qrcode_for($url), format => 'png' );
@@ -132,7 +132,7 @@ helper qrcode_for_url => sub( $c, $url ) {
     return qrcode_for( $url )
 };
 
-get 'login-qrcode.png' => sub( $c ) {
+get '/login-qrcode.png' => sub( $c ) {
     my $session = $c->stash('mojox-session');
     my $sid = $session->sid;
 
