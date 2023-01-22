@@ -50,8 +50,13 @@ my %module = (
         'Mojolicious::Static::Role::Compressed' => '0.04',
         'Mojolicious::Plugin::Gzip'             => '0.04',
         # For external (not in-memory) session handling
+        'DBD::SQLite'             => 0,
         'MojoX::Session'          => 0,
+
+        # For the Login/QR Codes
         'Authen::OATH'            => 0,
+        'Imager::QRCode'          => 0,
+        'Imager::File::PNG'       => 0,
         'Plack::Loader'           => 0,
     },
     TEST_REQUIRES => {
