@@ -17,3 +17,4 @@ frame-*.png
 public/*.gz
 public/js/*.gz
 public/css/*.gz
+db/
