@@ -50,6 +50,11 @@ plugin session => {
         $session->load or $session->create
     },
 };
+#app->hook( after_dispatch => sub ( $c ) {
+#    my $s = $c->stash( 'mojox-session' );
+#    $s->flush() if $s;
+#    return
+#});
 
 
 get '/' => sub {
@@ -413,5 +418,7 @@ window.setTimeout(checkLoggedIn, 5000);
 <li>XXX this needs to be implemented:</li>
 <li>Confirm the addition here</li>
 <li>Done</li>
+<li><a href="<%= url_for('/logout.html' ) %>">Log out</a></li>
+<li>... then log back in by reading the QR code with your phone</li>
 </ol>
 </html>
