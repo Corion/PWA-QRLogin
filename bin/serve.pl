@@ -41,8 +41,16 @@ $dbh->do(<<'SQL');
     );
 SQL
 
-plugin session =>
-    {stash_key => 'mojox-session', store => MojoX::Session::Store::Dbi->new(dbh  => $dbh), expires_delta =>  60*60};
+plugin session => {
+    stash_key => 'mojox-session',
+    store => MojoX::Session::Store::Dbi->new(dbh  => $dbh),
+    expires_delta =>  60*60,
+    # Add automatic loading/saving of the session here, maybe this needs a patch later?!
+    init => sub( $c, $session ) {
+        $session->load or $session->create
+    },
+};
+
 
 get '/' => sub {
     my $c = shift;
